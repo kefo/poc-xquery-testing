@@ -7,7 +7,7 @@ declare namespace rdfs          = "http://www.w3.org/2000/01/rdf-schema#";
 declare namespace madsrdf       = "http://www.loc.gov/mads/rdf/v1#";
 declare namespace   skos                = "http://www.w3.org/2004/02/skos/core#";
 
-let $BASE_URL := "https://preprod-8288.id.loc.gov"
+declare variable $BASE_URL external := "https://id.loc.gov";
 
 let $uri := fn:concat($BASE_URL, "/authorities/subjects/sh85139805")
 
@@ -18,16 +18,9 @@ let $headers :=
         </headers>
    </options>
 let $rdf := test:http-get( $uri, $headers )
-
- (:
- <http:header name="Content-Type" value="image/svg+xml"/>
-  <http:header name="X-Cache-Lookup" value="MISS from knsq22.knams.wikimedia.org:80"/>
-  :)
   
 return 
     (
-        $rdf[1],
-        
         test:assert-true(
             303 eq xs:integer($rdf[1]/@status), 
             fn:concat("HTTP Response code no 302 for: ", $uri)

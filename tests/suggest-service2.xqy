@@ -18,7 +18,7 @@ declare namespace js            = "http://marklogic.com/xdmp/json/basic" ;
 declare default element namespace    "http://marklogic.com/xdmp/json/basic";
 (:let $local-base:= fn:concat($BASE_URL):)
 
-let $BASE_URL := "https://preprod-8288.id.loc.gov"
+declare variable $BASE_URL external := "https://id.loc.gov";
 
 let $uri-vocab := fn:concat($BASE_URL, "/vocabulary/relators/suggest2/?count=50&amp;q=author&amp;mime=xml")
 let $results-vocab := test:http-get($uri-vocab)
