@@ -7,6 +7,15 @@
 # This protects against not being able to locate the `config` file.
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+BASE_URL=$1
 BASEX_EXEC=$DIR/basex
 
-$BASEX_EXEC $DIR/../tests/suggest-service2.xqy
+
+echo
+echo "Testing suggest-service2.xqy"
+$BASEX_EXEC -bBASE_URL=$BASE_URL $DIR/../tests/suggest-service2.xqy
+
+echo
+echo
+echo "Testing jsonld.xqy"
+$BASEX_EXEC -bBASE_URL=$BASE_URL $DIR/../tests/jsonld.xqy
