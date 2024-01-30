@@ -207,6 +207,17 @@ declare function helper:easy-url($url) as xs:string
 
 declare function helper:http-get($url as xs:string)
 {
+    helper:http-get($url, ())
+};
+
+declare function helper:http-get($url as xs:string, $headers)
+{
+    let $headers := 
+        if ( fn:exists($headers/*:headers) ) then
+            for $h in $headers/*:headers/*
+            return <http:header name="{fn:local-name($h)}" value="{xs:string($h)}" />
+        else
+            ()
     let $url-encoded := 
         if ( fn:contains($url, '%') ) then
             (: let's assume it is encoded, for now. :)
@@ -215,7 +226,7 @@ declare function helper:http-get($url as xs:string)
             fn:concat( fn:substring-before($url, '?'), '?', web:encode-url(fn:substring-after($url, '?')) )
         else
             $url
-    return http:send-request(<http:request method='get' />, $url-encoded )
+    return http:send-request(<http:request method='get' follow-redirect="false">{$headers}</http:request>, $url-encoded )
 };
 
 (:
