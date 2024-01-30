@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Path to this script
+FILE="${BASH_SOURCE[0]}"
+while [ -h "$FILE" ] ; do
+  SRC="$(readlink "$FILE")"
+  FILE="$( cd -P "$(dirname "$FILE")" && \
+           cd -P "$(dirname "$SRC")" && pwd )/$(basename "$SRC")"
+done
+MAIN="$( cd -P "$(dirname "$FILE")/.." && pwd )"
+
+echo $MAIN
+# Core and library classes
+CP=$MAIN/lib/BaseX107.jar
+echo $CP
+
+# Options for virtual machine (can be extended by global options)
+BASEX_JVM="-Xmx2g $BASEX_JVM"
+
+JAVA_HOME='/c/Program Files/Oxygen XML Editor 25/jre'
+# Run code
+"$JAVA_HOME"/bin/java -cp "$CP" $BASEX_JVM org.basex.BaseX "$@"
