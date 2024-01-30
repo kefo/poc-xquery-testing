@@ -1,12 +1,12 @@
-xquery version "1.0-ml";
+xquery version "1.0";
 
 (:
     Tests the suggest 2.0 service
 :)
  
-import module namespace test="http://marklogic.com/roxy/test-helper" at "/test/test-helper.xqy";
-import module namespace c = "http://marklogic.com/roxy/test-config" at "/test/test-config.xqy";
-import module namespace constants   = "info:lc/id-modules/constants#" at "/constants.xqy";
+import module namespace test="http://marklogic.com/roxy/test-helper" at "../modules/test-helper.xqy";
+
+
 declare namespace xdmp = "http://marklogic.com/xdmp";
 declare namespace rdf           = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 declare namespace rdfs          = "http://www.w3.org/2000/01/rdf-schema#";
@@ -16,147 +16,149 @@ declare namespace lcc           = "http://id.loc.gov/ontologies/lcc#";
 declare namespace js            = "http://marklogic.com/xdmp/json/basic" ;
                                
 declare default element namespace    "http://marklogic.com/xdmp/json/basic";
-(:let $local-base:= fn:concat("http://localhost:", xdmp:get-request-port()):)
+(:let $local-base:= fn:concat($BASE_URL):)
 
-let $uri-vocab := fn:concat("http://localhost:", xdmp:get-request-port(), "/vocabulary/relators/suggest2/?count=50&amp;q=author&amp;mime=xml")
-let $results-vocab := xdmp:http-get($uri-vocab)
+let $BASE_URL := "https://preprod-8288.id.loc.gov"
+
+let $uri-vocab := fn:concat($BASE_URL, "/vocabulary/relators/suggest2/?count=50&amp;q=author&amp;mime=xml")
+let $results-vocab := test:http-get($uri-vocab)
 let $results-vocab-xml:=$results-vocab[2]/child::*[fn:name()] 
 let $results-vocab-uri:=$results-vocab-xml//hits/hit[1]/uri
 let $results-vocab-label:=$results-vocab-xml//hits/hit[1]/aLabel
 
-let $uri-subjects := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/subjects/suggest2/?q=bird%20watching&amp;mime=xml")
-let $results-subjects := xdmp:http-get($uri-subjects)
+let $uri-subjects := fn:concat($BASE_URL, "/authorities/subjects/suggest2/?q=bird%20watching&amp;mime=xml")
+let $results-subjects := test:http-get($uri-subjects)
 let $results-subjects-xml :=   $results-subjects[2]/node() 
 
-let $uri-names := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/names/suggest2/?q=twain,%20mark&amp;mime=xml")
-let $results-names := xdmp:http-get($uri-names)
+let $uri-names := fn:concat($BASE_URL, "/authorities/names/suggest2/?q=twain,%20mark&amp;mime=xml")
+let $results-names := test:http-get($uri-names)
 let $results-names-xml :=  $results-names[2]
 
-let $uri-works := fn:concat("http://localhost:", xdmp:get-request-port(), "/resources/works/suggest2/?q=twain,%20mark&amp;mime=xml")
-let $results-works := xdmp:http-get($uri-works)
+let $uri-works := fn:concat($BASE_URL, "/resources/works/suggest2/?q=twain,%20mark&amp;mime=xml")
+let $results-works := test:http-get($uri-works)
 let $results-works-xml := $results-works[2]
 
 
-(:let $uri-instances := fn:concat("http://localhost:", xdmp:get-request-port(), "/resources/instances/suggest2/?q=twain,%20mark,%201835-1910,%20The%20pu&amp;mime=xml"):)
-let $uri-instances := fn:concat("http://localhost:", xdmp:get-request-port(), "/resources/instances/suggest2/?q=Kittens%20in%203-d&amp;mime=xml")
-let $results-instances := xdmp:http-get($uri-instances)
+(:let $uri-instances := fn:concat($BASE_URL, "/resources/instances/suggest2/?q=twain,%20mark,%201835-1910,%20The%20pu&amp;mime=xml"):)
+let $uri-instances := fn:concat($BASE_URL, "/resources/instances/suggest2/?q=Kittens%20in%203-d&amp;mime=xml")
+let $results-instances := test:http-get($uri-instances)
 let $results-instances-xml :=$results-instances[2]
 
-let $uri-hubs := fn:concat("http://localhost:", xdmp:get-request-port(), "/resources/hubs/suggest2/?q=twain,%20mark&amp;mime=xml")
-let $results-hubs := xdmp:http-get($uri-hubs)
+let $uri-hubs := fn:concat($BASE_URL, "/resources/hubs/suggest2/?q=twain,%20mark&amp;mime=xml")
+let $results-hubs := test:http-get($uri-hubs)
 let $results-hubs-xml := $results-hubs[2]
 
 (: suggest 2 new: untested tests :)
-let $uri-variants := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/subjects/suggest2/?q=Gun%20dog&amp;mime=xml")
-let $results-variants := xdmp:http-get($uri-variants)
+let $uri-variants := fn:concat($BASE_URL, "/authorities/subjects/suggest2/?q=Gun%20dog&amp;mime=xml")
+let $results-variants := test:http-get($uri-variants)
 let $results-variants-xml := $results-variants[2]
 
 (:    * token search works, finds n2009017420 first :)
-let $tokens-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/names/suggest2?q=n200901742&amp;mime=xml")
-let $tokens-results := xdmp:http-get($tokens-uri)
+let $tokens-uri := fn:concat($BASE_URL, "/authorities/names/suggest2?q=n200901742&amp;mime=xml")
+let $tokens-results := test:http-get($tokens-uri)
 let $tokens-results-xml := $tokens-results[2]
 
 (:    * code search works :)
-let $code-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/entities/roles/suggest2?q=sng&amp;mime=xml")
-let $code-results := xdmp:http-get($code-uri)
+let $code-uri := fn:concat($BASE_URL, "/entities/roles/suggest2?q=sng&amp;mime=xml")
+let $code-results := test:http-get($code-uri)
 let $code-results-xml := $code-results[2]
 (:square bracket doesn't break things 
     /suggest2?q=sng,%20t.%20[T
  finds 	"http://id.loc.gov/entities/providers/674833871d11b7492dd9d6bc7f3c5bf9":)
-let $regex-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/suggest2?q=sng,%20t.%20[T&amp;mime=xml")
-let $regex-results := xdmp:http-get($regex-uri)
+let $regex-uri := fn:concat($BASE_URL, "/suggest2?q=sng,%20t.%20[T&amp;mime=xml")
+let $regex-results := test:http-get($regex-uri)
 let $regex-results-xml := $regex-results[2]
 
 (:    * rdftype search works :)
-let $rdftype-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/names/suggest2?q=Twain&amp;rdftype=CorporateName&amp;mime=xml")
-let $rdftype-results := xdmp:http-get($rdftype-uri)
+let $rdftype-uri := fn:concat($BASE_URL, "/authorities/names/suggest2?q=Twain&amp;rdftype=CorporateName&amp;mime=xml")
+let $rdftype-results := test:http-get($rdftype-uri)
 let $rdftype-results-xml := $rdftype-results[2]
 
 
     
 (: memberof:)
-let $memberof-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/suggest2?mime=xml&amp;memberOf=http://id.loc.gov/vocabulary/graphicMaterials/collection_graphicMaterials&amp;q=air")
-let $memberof-results := xdmp:http-get($memberof-uri)
+let $memberof-uri := fn:concat($BASE_URL, "/suggest2?mime=xml&amp;memberOf=http://id.loc.gov/vocabulary/graphicMaterials/collection_graphicMaterials&amp;q=air")
+let $memberof-results := test:http-get($memberof-uri)
 let $memberof-results-xml :=$memberof-results[2] 
 (: multiple memberof:)
-let $membersof-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/suggest2?q=history&amp;memberOfURI=http://id.loc.gov/authorities/subjects/collection_PatternHeadingH1156&amp;memberOf=http://id.loc.gov/authorities/subjects/collection_PatternHeadingH1160&amp;mime=xml")
-let $membersof-results := xdmp:http-get($membersof-uri)
+let $membersof-uri := fn:concat($BASE_URL, "/suggest2?q=history&amp;memberOfURI=http://id.loc.gov/authorities/subjects/collection_PatternHeadingH1156&amp;memberOf=http://id.loc.gov/authorities/subjects/collection_PatternHeadingH1160&amp;mime=xml")
+let $membersof-results := test:http-get($membersof-uri)
 let $membersof-results-xml := $membersof-results[2]
 
 (: collection:)
-let $collection-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/resources/instances/suggest2?q=Portales%20D%C3%A1vila&amp;collection=/processing/load_resources/2021-08-09/&amp;mime=xml")
-let $collection-results := xdmp:http-get($collection-uri)
+let $collection-uri := fn:concat($BASE_URL, "/resources/instances/suggest2?q=Portales%20D%C3%A1vila&amp;collection=/processing/load_resources/2021-08-09/&amp;mime=xml")
+let $collection-results := test:http-get($collection-uri)
 let $collection-results-xml := $collection-results[2]
 
 (:    * keyword search works :)
 (:http://id.loc.gov/authorities/childrensSubjects/sj2021059754:)
 
-let $keyword-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/childrensSubjects/suggest2?q=Intifada&amp;searchtype=keyword&amp;mime=xml")
-let $keyword-results := xdmp:http-get($keyword-uri)
+let $keyword-uri := fn:concat($BASE_URL, "/authorities/childrensSubjects/suggest2?q=Intifada&amp;searchtype=keyword&amp;mime=xml")
+let $keyword-results := test:http-get($keyword-uri)
 let $keyword-results-xml := $keyword-results[2]
 (: deprecated/use instead has uri, not label https://preprod-8287.id.loc.gov/authorities/subjects/sh2008025556.rdf
     https://preprod-8287.id.loc.gov/suggest2?q=test%20pressing&mime=xml
     http://id.loc.gov/authorities/genreForms/gf2011026687:)
-let $instead-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/suggest2?q=test%20pressing&amp;mime=xml")
-let $instead-results := xdmp:http-get($instead-uri)
+let $instead-uri := fn:concat($BASE_URL, "/suggest2?q=test%20pressing&amp;mime=xml")
+let $instead-results := test:http-get($instead-uri)
 let $instead-results-xml := $instead-results[2]
 
 (:    * diacritic should be insensitive, find n87897445 this is faked because the collation is codepoint on alabel, vlabel for now  :)
-let $diac-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/names/suggest2?q=Jose&amp;rdftype=PersonalName&amp;mime=xml")
-let $diac-results := xdmp:http-get($diac-uri)
+let $diac-uri := fn:concat($BASE_URL, "/authorities/names/suggest2?q=Jose&amp;rdftype=PersonalName&amp;mime=xml")
+let $diac-results := test:http-get($diac-uri)
 let $diac-results-xml := $diac-results[2]
 (:   multiple qs ignore all but first q and find :	"http://id.loc.gov/authorities/names/nr2004022158":)
-let $multiq-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/names/suggest2?q=anthology&amp;q=time&amp;mime=xml")
-let $multiq-results := xdmp:http-get($multiq-uri)
+let $multiq-uri := fn:concat($BASE_URL, "/authorities/names/suggest2?q=anthology&amp;q=time&amp;mime=xml")
+let $multiq-results := test:http-get($multiq-uri)
 let $multiq-results-xml := $multiq-results[2]
 (:
 deprecated (should only have a variant label)            https://preprod-8287.id.loc.gov/authorities/subjects/sh89001270.rdf
 :)
-let $depr-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/subjects/suggest2?q=Twain,%20Mark,%201835-1910--Characters--Huckleberry%20Finn&amp;mime=xml")
-let $depr-results := xdmp:http-get($depr-uri)
+let $depr-uri := fn:concat($BASE_URL, "/authorities/subjects/suggest2?q=Twain,%20Mark,%201835-1910--Characters--Huckleberry%20Finn&amp;mime=xml")
+let $depr-results := test:http-get($depr-uri)
 let $depr-results-xml := $depr-results[2]
 
 (:
 deduping (should only have ONE uri for laq, tho it is found as code, label  )  https://preprod-8287.id.loc.gov/vocabulary/mmaterial/suggest2?q=lac
 :)
-let $dedup-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/vocabulary/mmaterial/suggest2?q=lac&amp;mime=xml")
-let $dedup-results := xdmp:http-get($dedup-uri)
+let $dedup-uri := fn:concat($BASE_URL, "/vocabulary/mmaterial/suggest2?q=lac&amp;mime=xml")
+let $dedup-results := test:http-get($dedup-uri)
 let $dedup-results-xml := $dedup-results[2]
 
 (:
 lcsh query should not find Untraced records like "Chicano ..."
 :)
-let $untraced-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/subjects/suggest2/?mime=xml&amp;q=Chicano .")
-let $untraced-results := xdmp:http-get($untraced-uri)
+let $untraced-uri := fn:concat($BASE_URL, "/authorities/subjects/suggest2/?mime=xml&amp;q=Chicano .")
+let $untraced-results := test:http-get($untraced-uri)
 let $untraced-results-xml := $untraced-results[2]
 
-let $untraced-keyword-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/authorities/subjects/suggest2/?mime=xml&amp;searchtype=keyword&amp;q=Chicano .")
-let $untraced-keyword-results := xdmp:http-get($untraced-keyword-uri)
+let $untraced-keyword-uri := fn:concat($BASE_URL, "/authorities/subjects/suggest2/?mime=xml&amp;searchtype=keyword&amp;q=Chicano .")
+let $untraced-keyword-results := test:http-get($untraced-keyword-uri)
 let $untraced-keyword-results-xml := $untraced-keyword-results[2]
 
 (:2022-12-16 alabel cts:reference collation is now codepoint; if it's en/s1, this is not the first result :)
-let $unicode-collation-uri := fn:concat("http://localhost:", xdmp:get-request-port(),
+let $unicode-collation-uri := fn:concat($BASE_URL,
                             "/authorities/names/suggest2/?mime=xml&amp;q=Soviet%20Union.%20Sovetskai%EF%B8%A0a%EF%B8%A1%20Armii%EF%B8%A0a%EF%B8%A1"
                             )
-let $unicode-collation-results := xdmp:http-get($unicode-collation-uri)
+let $unicode-collation-results := test:http-get($unicode-collation-uri)
 let $unicode-collation-results-xml := $unicode-collation-results[2]
 
 (: xml results:)
 
-        let $rwo-uri:=fn:concat("http://localhost:", xdmp:get-request-port(),"/rwo/agents/suggest2?q=Twain,%20Mark,%201835-1910%20(Spirit)&amp;mime=xml")
-        let $rwo-result:=xdmp:http-get($rwo-uri)
+        let $rwo-uri:=fn:concat($BASE_URL,"/rwo/agents/suggest2?q=Twain,%20Mark,%201835-1910%20(Spirit)&amp;mime=xml")
+        let $rwo-result:=test:http-get($rwo-uri)
         let $rwo-result-xml:= $rwo-result[2]
         
-        let $highcount-uri:=fn:concat("http://localhost:", xdmp:get-request-port(),"/suggest2?q=twain&amp;count=11999&amp;mime=xml")
-        let $highcount-result:=xdmp:http-get($rwo-uri)
+        let $highcount-uri:=fn:concat($BASE_URL,"/suggest2?q=twain&amp;count=11999&amp;mime=xml")
+        let $highcount-result:=test:http-get($rwo-uri)
         let $highcount-result-xml:=$highcount-result[2]
         
-        let $badcount-uri:=fn:concat("http://localhost:", xdmp:get-request-port(),"/suggest2?q=twain&amp;count=abc&amp;mime=xml")
-        let $badcount-result:=xdmp:http-get($badcount-uri)
+        let $badcount-uri:=fn:concat($BASE_URL,"/suggest2?q=twain&amp;count=abc&amp;mime=xml")
+        let $badcount-result:=test:http-get($badcount-uri)
         let $badcount-result-xml:= $badcount-result[2]
 (: class excluded :)
-        let $noclass-uri:=fn:concat("http://localhost:", xdmp:get-request-port(),"/suggest2?q=Fine%20Arts&amp;rdftype=ClassNumber")
-        let $noclass-result:=xdmp:http-get($noclass-uri)
+        let $noclass-uri:=fn:concat($BASE_URL,"/suggest2?q=Fine%20Arts&amp;rdftype=ClassNumber")
+        let $noclass-result:=test:http-get($noclass-uri)
         let $noclass-result-xml:= $noclass-result[2]
         let $noclass-result-uris:=for $x in $badcount-result-xml//uri 
                                     return    
@@ -215,11 +217,11 @@ return
         
         test:assert-true(
             fn:count($results-works-xml//hit/aLabel) eq 10,
-            fn:concat("Did not get 10 hit/aLabel paths in the xml result. Got: ", xdmp:quote($results-works-xml) )
+            fn:concat("Did not get 10 hit/aLabel paths in the xml result. Got: ", $results-works-xml )
         ),        
         test:assert-true(
             fn:count($results-works-xml//hit/uri) eq 10,
-            fn:concat("Did not get the10 hit/uri paths in the xml result. Got: ", xdmp:quote($results-works-xml) )
+            fn:concat("Did not get the10 hit/uri paths in the xml result. Got: ", $results-works-xml )
         ),
         
         test:assert-true(
@@ -376,8 +378,8 @@ return
               $dedup-results-xml//count eq '1', 
             fn:concat("Did not get the hit count  '1' got: ",  $dedup-results-xml//count/text() )
         )   
-(:        let $code-uri := fn:concat("http://localhost:", xdmp:get-request-port(), "/entities/roles/suggest2?q=sng&amp;mime=xml")
-let $code-results := xdmp:http-get($code-uri)
+(:        let $code-uri := fn:concat($BASE_URL, "/entities/roles/suggest2?q=sng&amp;mime=xml")
+let $code-results := test:http-get($code-uri)
 let $code-results-xml := $code-results[2]:)
 , 
            test:assert-true(
